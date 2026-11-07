@@ -260,9 +260,23 @@ class ScamGame:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    game = ScamGame(MESSAGES, rounds=5)
-    game.run()
+    from train import load_dataframe, make_pipeline, TfidfVectorizer, LogisticRegression
+    DEFAULT_DATA_PATH="example_data.json"
 
+    df = load_dataframe(DEFAULT_DATA_PATH)
+    model = make_pipeline(
+        TfidfVectorizer(ngram_range=(1, 2), min_df=1,
+                        sublinear_tf=True, lowercase=True),
+        LogisticRegression(max_iter=1000, C=1.0),
+    ).fit(df["text"].tolist(), df["label_int"].to_numpy())
+
+    def classifier(text: str) -> tuple[Verdict, float]:
+        p_scam = float(model.predict_proba([text])[0, 1])
+        verdict = Verdict.SCAM if p_scam >= 0.5 else Verdict.LEGIT
+        conf = p_scam if verdict is Verdict.SCAM else 1.0 - p_scam
+        return verdict, conf
+
+    ScamGame(MESSAGES, rounds=5, classifier=classifier).run()
 
 if __name__ == "__main__":
     main()
