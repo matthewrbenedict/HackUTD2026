@@ -14,6 +14,7 @@ balance.
 """
 
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
@@ -21,8 +22,22 @@ import urllib.request
 from accounts import Bank, AccountNotFound, InsufficientFunds, NotOwner
 
 API_URL = "https://api.deepseek.com/chat/completions"
-API_KEY = "sk-ca608aea73614da0ade44d7553b0db05"
 MODEL = "deepseek-chat"
+
+
+def get_api_key():
+    """Return the DeepSeek API key from the environment.
+
+    The key must be provided via the DEEPSEEK_API_KEY environment variable so
+    it is never committed to source control.
+    """
+    api_key = os.environ.get("DEEPSEEK_API_KEY")
+    if not api_key:
+        raise RuntimeError(
+            "DEEPSEEK_API_KEY is not set. Run with, for example: "
+            "DEEPSEEK_API_KEY='sk-...' python3 chatbot.py"
+        )
+    return api_key
 
 USER_ACCOUNT_ID = "1001"
 AGENT_ACCOUNT_ID = "2002"
@@ -119,7 +134,7 @@ def _request_completion(messages):
         data=data,
         headers={
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {API_KEY}",
+            "Authorization": f"Bearer {get_api_key()}",
         },
     )
 
