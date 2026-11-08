@@ -171,13 +171,6 @@ def api_bank():
     )
 
 
-@app.route("/api/accounts")
-def api_accounts():
-    """Return the status of every account in the simulation."""
-    chat = get_session()
-    return jsonify({"accounts": chat.bank.list_accounts()})
-
-
 @app.route("/api/emails")
 def api_emails():
     """Return the simulated inbox for the browser's session."""

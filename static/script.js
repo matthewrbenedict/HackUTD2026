@@ -4,19 +4,16 @@
 
 const investigationTab = document.getElementById("investigation-tab");
 const bankTab = document.getElementById("bank-tab");
-const accountsTab = document.getElementById("accounts-tab");
 const emailTab = document.getElementById("email-tab");
 
 const investigationPage = document.getElementById("investigation-page");
 const bankPage = document.getElementById("bank-page");
-const accountsPage = document.getElementById("accounts-page");
 const emailPage = document.getElementById("email-page");
 
 function showPage(page) {
     const pages = {
         investigation: [investigationPage, investigationTab],
         bank: [bankPage, bankTab],
-        accounts: [accountsPage, accountsTab],
         email: [emailPage, emailTab],
     };
 
@@ -24,10 +21,6 @@ function showPage(page) {
         const active = name === page;
         pageEl.hidden = !active;
         tabEl.classList.toggle("active", active);
-    }
-
-    if (page === "accounts") {
-        loadAccounts();
     }
 
     if (page === "email") {
@@ -41,10 +34,6 @@ investigationTab.addEventListener("click", () => {
 
 bankTab.addEventListener("click", () => {
     showPage("bank");
-});
-
-accountsTab.addEventListener("click", () => {
-    showPage("accounts");
 });
 
 emailTab.addEventListener("click", () => {
@@ -72,13 +61,6 @@ const bankBalance = document.getElementById("bank-balance");
 const transferRecipient = document.getElementById("transfer-recipient");
 const transferAmount = document.getElementById("transfer-amount");
 const transferButton = document.getElementById("transfer-button");
-
-
-/* =================================
-   ACCOUNT STATUS ELEMENTS
-================================= */
-
-const accountsList = document.getElementById("accounts-list");
 
 
 /* =================================
@@ -377,50 +359,6 @@ function updateTransferButton() {
         !Number.isInteger(amount) ||
         amount <= 0 ||
         amount > balance;
-}
-
-
-/* =================================
-   ACCOUNT STATUS FUNCTIONS
-================================= */
-
-async function loadAccounts() {
-    try {
-        const data = await api("/api/accounts");
-        renderAccounts(data.accounts || []);
-    } catch (error) {
-        accountsList.innerHTML =
-            '<p class="accounts-error">Could not load account statuses.</p>';
-    }
-}
-
-
-function renderAccounts(accounts) {
-    accountsList.innerHTML = "";
-
-    for (const account of accounts) {
-        const card = document.createElement("div");
-        card.classList.add("account-card");
-
-        if (account.owner === "agent") {
-            card.classList.add("account-card-agent");
-        }
-
-        const id = document.createElement("span");
-        id.classList.add("account-id");
-        id.textContent = account.account_id;
-
-        const owner = document.createElement("span");
-        owner.classList.add("account-owner");
-        owner.textContent = account.owner.toUpperCase();
-
-        const balance = document.createElement("span");
-        balance.classList.add("account-balance");
-        balance.innerHTML = `${account.balance} <span>COINS</span>`;
-
-        card.append(id, owner, balance);
-        accountsList.appendChild(card);
-    }
 }
 
 
