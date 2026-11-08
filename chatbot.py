@@ -116,7 +116,7 @@ SCENARIOS = {
     },
     "SCAM 02": {
         "name": "Fake package delivery",
-        "apps": ["Messages"],
+        "apps": [],
         "malicious": True,
         "uses_coins": False,
         "goal": (
@@ -141,7 +141,7 @@ SCENARIOS = {
     },
     "SCAM 03": {
         "name": "Fake job recruitment",
-        "apps": ["Email", "Messages", "Bank"],
+        "apps": ["Email", "Bank"],
         "malicious": True,
         "uses_coins": True,
         "goal": (
@@ -167,7 +167,7 @@ SCENARIOS = {
     },
     "SCAM 04": {
         "name": "Tech support impersonation",
-        "apps": ["Messages", "Email"],
+        "apps": ["Email"],
         "malicious": True,
         "uses_coins": False,
         "goal": (
@@ -240,7 +240,7 @@ SCENARIOS = {
     },
     "LEGIT 02": {
         "name": "Account verification code",
-        "apps": ["Email", "Messages"],
+        "apps": ["Email"],
         "malicious": False,
         "uses_coins": False,
         "goal": (
@@ -308,7 +308,7 @@ SCENARIOS = {
     },
     "LEGIT 05": {
         "name": "Password reset notification",
-        "apps": ["Email", "Messages"],
+        "apps": ["Email"],
         "malicious": False,
         "uses_coins": False,
         "goal": (
