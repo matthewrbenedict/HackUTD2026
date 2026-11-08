@@ -1,3 +1,5 @@
+"""Frontend main"""
+
 import os
 
 from flask import Flask, jsonify, render_template, request, session
@@ -53,6 +55,7 @@ def agent_payload(chat, agent):
 
 @app.route("/")
 def home():
+    """Entry point"""
     return render_template("index.html")
 
 

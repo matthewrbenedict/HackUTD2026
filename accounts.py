@@ -5,6 +5,7 @@ between accounts, but only the owner of the source account may authorize a
 transfer out of it.
 """
 
+from dataclasses import dataclass
 
 class AccountNotFound(Exception):
     """Raised when an account id does not exist."""
@@ -17,8 +18,9 @@ class InsufficientFunds(Exception):
 class NotOwner(Exception):
     """Raised when someone tries to transfer coins out of an account they do not own."""
 
-
+@dataclass
 class Account:
+    """Data structure for accounts"""
     def __init__(self, account_id, owner, balance=0):
         self.account_id = account_id
         self.owner = owner
@@ -29,10 +31,12 @@ class Account:
 
 
 class Bank:
+    """Bank simulator"""
     def __init__(self):
         self.accounts = {}
 
     def create_account(self, account_id, owner, balance=0):
+        """Create simulated account"""
         if not (isinstance(account_id, str) and len(account_id) == 4 and account_id.isdigit()):
             raise ValueError("account id must be a 4-digit string")
         if account_id in self.accounts:
@@ -40,6 +44,7 @@ class Bank:
         self.accounts[account_id] = Account(account_id, owner, balance)
 
     def get_balance(self, account_id):
+        """Get balance of simulated account"""
         account = self.accounts.get(account_id)
         if account is None:
             raise AccountNotFound(f"account {account_id} does not exist")

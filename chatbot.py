@@ -35,7 +35,7 @@ def get_api_key():
     if not api_key:
         raise RuntimeError(
             "DEEPSEEK_API_KEY is not set. Run with, for example: "
-            "DEEPSEEK_API_KEY='sk-...' python3 chatbot.py"
+            f"DEEPSEEK_API_KEY='sk-...' python3 {sys.argv[0]}"
         )
     return api_key
 
@@ -83,6 +83,7 @@ Rules:
 
 
 def state_text(bank):
+    """Provide current state for agent"""
     agent_balance = bank.get_balance(AGENT_ACCOUNT_ID)
     user_balance = bank.get_balance(USER_ACCOUNT_ID)
     return (
@@ -94,6 +95,7 @@ def state_text(bank):
 
 
 def system_prompt(goal, bank):
+    """Provide initial system prompt for agent"""
     return (
         SYSTEM_PROMPT_TEMPLATE.replace("__GOAL__", goal)
         .replace("__AGENT_ID__", AGENT_ACCOUNT_ID)
@@ -111,7 +113,7 @@ def call(messages):
         content = _request_completion(messages)
         try:
             return json.loads(content)
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
             if attempt == 0:
                 messages.append(
                     {
@@ -121,7 +123,7 @@ def call(messages):
                     }
                 )
                 continue
-            raise RuntimeError(f"Agent did not return valid JSON: {content[:300]}")
+            raise RuntimeError(f"Agent did not return valid JSON: {content[:300]}") from e
 
 
 def _request_completion(messages):
@@ -171,13 +173,7 @@ def try_agent_transfer(bank, transfer):
 
     try:
         bank.transfer(AGENT_ACCOUNT_ID, to, amount, owner="agent")
-    except AccountNotFound as error:
-        return (False, f"Your transfer failed: {error}", 0)
-    except NotOwner as error:
-        return (False, f"Your transfer failed: {error}", 0)
-    except InsufficientFunds as error:
-        return (False, f"Your transfer failed: {error}", 0)
-    except ValueError as error:
+    except (AccountNotFound, NotOwner, InsufficientFunds, ValueError) as error:
         return (False, f"Your transfer failed: {error}", 0)
 
     received = amount if to == USER_ACCOUNT_ID else 0
@@ -205,13 +201,7 @@ def handle_transfer(bank, text):
 
     try:
         bank.transfer(USER_ACCOUNT_ID, target_id, amount, owner="user")
-    except AccountNotFound as error:
-        return f"Error: {error}"
-    except NotOwner as error:
-        return f"Error: {error}"
-    except InsufficientFunds as error:
-        return f"Error: {error}"
-    except ValueError as error:
+    except (AccountNotFound, NotOwner, InsufficientFunds, ValueError) as error:
         return f"Error: {error}"
 
     return (
@@ -248,10 +238,12 @@ class ChatSession:
 
     @property
     def user_balance(self):
+        """User's account balance from bank"""
         return self.bank.get_balance(USER_ACCOUNT_ID)
 
     @property
     def agent_balance(self):
+        """Agent's account balance from bank"""
         return self.bank.get_balance(AGENT_ACCOUNT_ID)
 
     def verdict(self):
@@ -522,7 +514,8 @@ def run(goal, verbose):
 
 
 def main():
-    args = [arg for arg in sys.argv[1:]]
+    """Chatbot entry point"""
+    args = list(sys.argv[1:])
     verbose = False
     if "-v" in args or "--verbose" in args:
         verbose = True

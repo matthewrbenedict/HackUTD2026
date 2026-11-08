@@ -20,6 +20,7 @@ from typing import Callable, Iterable
 # ---------------------------------------------------------------------------
 
 class Verdict(Enum):
+    """Represents scam vs. legit classifier"""
     SCAM = "scam"
     LEGIT = "legit"
 
@@ -34,6 +35,7 @@ class Message:
 
 @dataclass
 class RoundResult:
+    """Tracks result of each round"""
     message: Message
     player_guess: Verdict
     correct: bool
@@ -41,6 +43,7 @@ class RoundResult:
 
 @dataclass
 class PlayerState:
+    """Tracks player score and statistics"""
     score: int = 0
     correct: int = 0
     total: int = 0
@@ -48,19 +51,19 @@ class PlayerState:
 
     @property
     def accuracy(self) -> float:
+        """Computed accuracy percentage"""
         return self.correct / self.total if self.total else 0.0
 
 
 # ---------------------------------------------------------------------------
-# (Mock) classifier — replace with a real model call
+# Mock classifier to use if model call is unavailable
 # ---------------------------------------------------------------------------
 
 def classify_message(text: str) -> tuple[Verdict, float]:
     """
     Stub classifier. Returns (verdict, confidence in [0, 1]).
 
-    In production this would call your ML model / API.
-    Here it uses crude heuristics so the game is playable.
+    This will be used for heuristics if model cannot be used.
     """
     scammy_tokens = [
         "urgent", "verify", "account suspended", "click here",
@@ -148,6 +151,7 @@ def _default_output(msg: str) -> None:
 # ---------------------------------------------------------------------------
 
 class ScamGame:
+    """Main game engine"""
     def __init__(
         self,
         messages: Iterable[Message],
@@ -216,6 +220,7 @@ class ScamGame:
     # -- main loop ----------------------------------------------------------
 
     def run(self) -> PlayerState:
+        """Main game loop"""
         pool = self.messages[:]
         self.rng.shuffle(pool)
         selected = pool[: self.rounds]
@@ -238,6 +243,7 @@ class ScamGame:
         return self.player
 
     def _show_summary(self) -> None:
+        """Show game summary of player (not model!) accuracy"""
         p = self.player
         self.output_fn("")
         self.output_fn("=" * 50)
@@ -260,6 +266,7 @@ class ScamGame:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
+    """Run classifier and start game loop"""
     from train import load_dataframe, make_pipeline, TfidfVectorizer, LogisticRegression
     DEFAULT_DATA_PATH="example_data.json"
 
