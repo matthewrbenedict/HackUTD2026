@@ -191,7 +191,7 @@ class ScamGame:
     # -- scoring ------------------------------------------------------------
 
     def _score_round(self, message: Message, guess: Verdict) -> RoundResult:
-        correct = guess is message.true_label
+        correct = guess == message.true_label
         result = RoundResult(message=message, player_guess=guess, correct=correct)
 
         self.player.total += 1
@@ -267,8 +267,13 @@ class ScamGame:
 
 def main() -> None:
     """Run classifier and start game loop"""
-    from train import load_dataframe, make_pipeline, TfidfVectorizer, LogisticRegression
-    DEFAULT_DATA_PATH="example_data.json"
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.pipeline import make_pipeline
+
+    from train import load_dataframe
+
+    DEFAULT_DATA_PATH = "example_data.json"
 
     df = load_dataframe(DEFAULT_DATA_PATH)
     model = make_pipeline(
@@ -280,7 +285,7 @@ def main() -> None:
     def classifier(text: str) -> tuple[Verdict, float]:
         p_scam = float(model.predict_proba([text])[0, 1])
         verdict = Verdict.SCAM if p_scam >= 0.5 else Verdict.LEGIT
-        conf = p_scam if verdict is Verdict.SCAM else 1.0 - p_scam
+        conf = p_scam if verdict == Verdict.SCAM else 1.0 - p_scam
         return verdict, conf
 
     ScamGame(MESSAGES, rounds=5, classifier=classifier).run()

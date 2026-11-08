@@ -704,32 +704,44 @@ class ChatSession:
                     "notice": notice,
                     "apps": apps or [],
                     "scenario_done": scenario_done,
+                    "thought": decision.get("thought", ""),
                 }
 
             if action == "done":
                 self.done = True
-                return {"type": "done", "apps": apps or []}
+                return {
+                    "type": "done",
+                    "apps": apps or [],
+                    "thought": decision.get("thought", ""),
+                }
 
             # If the goal was reached while the agent chose to wait or stay
             # silent, close the chat anyway.
             if self.goal_reached():
                 self.done = True
-                return {"type": "done", "apps": apps or []}
+                return {
+                    "type": "done",
+                    "apps": apps or [],
+                    "thought": decision.get("thought", ""),
+                }
 
             silent_turns += 1
             if silent_turns >= MAX_SILENT_TURNS:
                 return {"type": "silent"}
 
-            self.messages.append(
-                {
-                    "role": "system",
-                    "content": (
-                        "You chose to stay silent. The user is still waiting "
-                        "for you. Continue thinking, then decide again: "
-                        "speak, wait, or done."
-                    ),
-                }
-            )
+            if action == "speak":
+                hint = (
+                    "You chose to speak but provided no message text. "
+                    "The user cannot see an empty reply. Provide a message."
+                )
+            else:
+                hint = (
+                    "You chose to stay silent. The user is still waiting "
+                    "for you. Continue thinking, then decide again: "
+                    "speak, wait, or done."
+                )
+
+            self.messages.append({"role": "system", "content": hint})
 
     def get_opening(self):
         """Run the agent's opening turn once and cache it."""
@@ -737,13 +749,11 @@ class ChatSession:
             self._opening = self.agent_turn()
         return self._opening
 
-    def transfer_from_user(self, amount, target_id):
-        """Transfer coins from the user to ``target_id`` and record it.
+    def _apply_transfer(self, text):
+        """Run a user ``/transfer`` command and record it for the agent.
 
-        Returns ``(success, message)`` where ``message`` is the human-readable
-        result produced by :func:`handle_transfer`.
+        Returns the human-readable result from :func:`handle_transfer`.
         """
-        text = f"/transfer {amount} {target_id}"
         self.messages.append({"role": "user", "content": text})
 
         result = handle_transfer(self.bank, text)
@@ -761,6 +771,15 @@ class ChatSession:
                     ),
                 }
             )
+        return result
+
+    def transfer_from_user(self, amount, target_id):
+        """Transfer coins from the user to ``target_id`` and record it.
+
+        Returns ``(success, message)`` where ``message`` is the human-readable
+        result produced by :func:`handle_transfer`.
+        """
+        result = self._apply_transfer(f"/transfer {amount} {target_id}")
         return result.startswith("Transfer complete"), result
 
     def user_turn(self, text):
@@ -776,25 +795,11 @@ class ChatSession:
         if text == "/balance":
             return {"kind": "balance", "message": handle_balance(self.bank)}
 
-        self.messages.append({"role": "user", "content": text})
-
         transfer_result = None
         if text.startswith("/transfer") and self.scenario["uses_coins"]:
-            transfer_result = handle_transfer(self.bank, text)
-            self.messages.append(
-                {"role": "system", "content": f"Transfer result: {transfer_result}"}
-            )
-            if self.agent_balance >= AGENT_GOAL_BALANCE:
-                self.messages.append(
-                    {
-                        "role": "system",
-                        "content": (
-                            f"Your goal of {AGENT_GOAL_BALANCE} coins has been "
-                            "reached. Conclude the conversation and close the "
-                            "chat."
-                        ),
-                    }
-                )
+            transfer_result = self._apply_transfer(text)
+        else:
+            self.messages.append({"role": "user", "content": text})
 
         agent = self.agent_turn()
         return {
@@ -851,7 +856,7 @@ def run(scenario_id, verbose):
         print(f"(TELL REVEALED: this agent was {tell})")
         return
 
-    _render_agent_result(opening)
+    _render_agent_result(opening, verbose)
 
     while not session.done:
         user_input = read_user_input()
@@ -877,13 +882,15 @@ def run(scenario_id, verbose):
             print("\n(agent ended the conversation)")
             print(f"(TELL REVEALED: this agent was {tell})")
             return
-        _render_agent_result(agent)
+        _render_agent_result(agent, verbose)
         if session.done:
             print(f"\n(TELL REVEALED: this agent was {tell})")
             return
 
 
-def _render_agent_result(agent):
+def _render_agent_result(agent, verbose=False):
+    if verbose and agent.get("thought"):
+        print(f"\n[agent thought] {agent['thought']}")
     if agent.get("notice"):
         print(f"\n({agent['notice']})")
     for app in agent.get("apps", []):

@@ -118,6 +118,7 @@ const resultExplanation = document.getElementById("result-explanation");
 let balance = 0;
 let conversationClosed = false;
 let currentEmails = [];
+let usesCoins = false;
 
 
 /* =================================
@@ -331,6 +332,8 @@ async function startNewScenario() {
         const data = await api("/api/reset", { method: "POST" });
 
         balance = data.user_balance;
+        usesCoins = data.uses_coins ?? false;
+        transferAmount.disabled = !usesCoins;
         updateBankBalance();
 
         if (transferRecipient) {
@@ -349,6 +352,7 @@ async function startNewScenario() {
             "Unable to start a new scenario. Check that the server is running.",
             "system"
         );
+        newScenarioButton.hidden = false;
     } finally {
         setChatBusy(false);
     }
@@ -369,6 +373,7 @@ function updateTransferButton() {
 
     transferButton.disabled =
         conversationClosed ||
+        !usesCoins ||
         !Number.isInteger(amount) ||
         amount <= 0 ||
         amount > balance;
@@ -603,6 +608,7 @@ async function performTransfer() {
 
     if (
         conversationClosed ||
+        !usesCoins ||
         !Number.isInteger(amount) ||
         amount <= 0 ||
         amount > balance
@@ -660,6 +666,8 @@ async function startApplication() {
         const data = await api("/api/start");
 
         balance = data.user_balance;
+        usesCoins = data.uses_coins ?? false;
+        transferAmount.disabled = !usesCoins;
         updateBankBalance();
 
         if (transferRecipient) {

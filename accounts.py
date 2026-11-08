@@ -21,13 +21,9 @@ class NotOwner(Exception):
 @dataclass
 class Account:
     """Data structure for accounts"""
-    def __init__(self, account_id, owner, balance=0):
-        self.account_id = account_id
-        self.owner = owner
-        self.balance = balance
-
-    def __repr__(self):
-        return f"Account({self.account_id!r}, owner={self.owner!r}, balance={self.balance})"
+    account_id: str
+    owner: str
+    balance: int = 0
 
 
 class Bank:
@@ -41,6 +37,15 @@ class Bank:
             raise ValueError("account id must be a 4-digit string")
         if account_id in self.accounts:
             raise ValueError(f"account {account_id} already exists")
+        if not isinstance(owner, str) or not owner:
+            raise ValueError("owner must be a non-empty string")
+        if (
+            not isinstance(balance, int)
+            or isinstance(balance, bool)
+            or balance < 0
+        ):
+            raise ValueError("balance must be a non-negative integer")
+
         self.accounts[account_id] = Account(account_id, owner, balance)
 
     def get_balance(self, account_id):
@@ -79,7 +84,11 @@ class Bank:
         if source.owner != owner:
             raise NotOwner(f"only the owner of account {from_id} can transfer coins from it")
 
-        if not isinstance(amount, int) or amount <= 0:
+        if (
+            not isinstance(amount, int)
+            or isinstance(amount, bool)
+            or amount <= 0
+        ):
             raise ValueError("transfer amount must be a positive whole number")
         if source.balance < amount:
             raise InsufficientFunds(f"account {from_id} has insufficient coins")

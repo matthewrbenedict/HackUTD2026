@@ -322,7 +322,7 @@ def main():
     early = tf.keras.callbacks.EarlyStopping(
         monitor="val_loss", patience=5, restore_best_weights=True)
     model.fit(train_ds, validation_data=test_ds, epochs=args.epochs,
-              callbacks=[early], verbose=2)
+              callbacks=[early], verbose=2, shuffle=False)
 
     y_prob = model.predict(test_ds).ravel()
     y_pred = (y_prob >= 0.5).astype(int)

@@ -20,6 +20,11 @@ SESSIONS = {}
 def create_session():
     """Create and store a fresh ChatSession for the current browser."""
     chat = ChatSession()
+
+    old_session_id = session.get("chat_session_id")
+    if old_session_id:
+        SESSIONS.pop(old_session_id, None)
+
     session_id = os.urandom(16).hex()
     session["chat_session_id"] = session_id
     SESSIONS[session_id] = chat
@@ -45,6 +50,7 @@ def start_payload(chat):
         "user_balance": chat.user_balance,
         "user_account_id": USER_ACCOUNT_ID,
         "agent_account_id": AGENT_ACCOUNT_ID,
+        "uses_coins": chat.scenario["uses_coins"],
     }
     response.update(agent_payload(chat, opening))
 
@@ -160,6 +166,7 @@ def api_bank():
             "user_balance": chat.user_balance,
             "user_account_id": USER_ACCOUNT_ID,
             "agent_account_id": AGENT_ACCOUNT_ID,
+            "uses_coins": chat.scenario["uses_coins"],
         }
     )
 
@@ -189,7 +196,9 @@ def api_emails_read():
     except (TypeError, ValueError):
         return jsonify({"success": False, "message": "Invalid email id."}), 400
 
-    chat.mark_email_read(email_id)
+    if not chat.mark_email_read(email_id):
+        return jsonify({"success": False, "message": "Email not found."}), 404
+
     return jsonify({"success": True, "emails": chat.list_emails()})
 
 
@@ -197,6 +206,15 @@ def api_emails_read():
 def api_bank_transfer():
     """Transfer coins from the user's account to the agent's account."""
     chat = get_session()
+
+    if not chat.scenario["uses_coins"]:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Coin transfers are not part of this scenario.",
+                "user_balance": chat.user_balance,
+            }
+        )
 
     payload = request.get_json(silent=True) or {}
     try:
