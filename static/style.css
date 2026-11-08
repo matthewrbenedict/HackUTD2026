@@ -135,6 +135,7 @@ main {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
     margin-bottom: 25px;
 }
 
@@ -147,142 +148,201 @@ main {
     font-family: monospace;
     font-size: 10px;
     letter-spacing: 1px;
-    color: #fbbf24;
-    border: 1px solid #854d0e;
-    background: rgba(245, 158, 11, 0.08);
+    color: #4ade80;
+    border: 1px solid #276749;
+    background: rgba(34, 197, 94, 0.08);
     padding: 7px 10px;
     border-radius: 4px;
+    white-space: nowrap;
 }
 
 /* =================================
-   MESSAGE CARD
+   CHAT INFORMATION
 ================================= */
 
-.message-card {
-    background: #0b1424;
-    border: 1px solid #31445e;
-    border-left: 3px solid #22d3ee;
-    border-radius: 8px;
-    padding: 22px;
-    margin-bottom: 30px;
-}
-
-.message-meta {
+.chat-info {
     display: flex;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px;
+    margin-bottom: 18px;
+    background: #0b1424;
+    border: 1px solid #23364e;
+    border-radius: 6px;
     font-family: monospace;
     font-size: 10px;
     letter-spacing: 1px;
     color: #64748b;
-    padding-bottom: 14px;
-    border-bottom: 1px solid #23364e;
 }
 
-.sender {
-    color: #67e8f9;
+/* =================================
+   CHAT WINDOW
+================================= */
+
+.chat-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-height: 350px;
+    max-height: 430px;
+    overflow-y: auto;
+    padding: 20px;
+    background: #080f1c;
+    border: 1px solid #263a54;
+    border-radius: 8px;
+}
+
+.chat-message {
+    display: flex;
+    flex-direction: column;
+    max-width: 85%;
+}
+
+.agent-message {
+    align-self: flex-start;
+}
+
+.user-message {
+    align-self: flex-end;
+}
+
+.message-label {
     font-family: monospace;
-    font-size: 12px;
-    margin: 17px 0;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: #22d3ee;
+    margin-bottom: 7px;
 }
 
-.message-text {
-    font-size: 16px;
-    line-height: 1.8;
+.user-message .message-label {
+    color: #4ade80;
+    text-align: right;
+}
+
+.chat-bubble {
+    padding: 14px 16px;
+    border-radius: 9px;
+    font-size: 14px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+.agent-message .chat-bubble {
+    background: #14243a;
+    border: 1px solid #31445e;
+    border-left: 3px solid #22d3ee;
     color: #e2e8f0;
 }
 
-.message-footer {
-    color: #64748b;
+.user-message .chat-bubble {
+    background: rgba(34, 197, 94, 0.08);
+    border: 1px solid #276749;
+    border-right: 3px solid #4ade80;
+    color: #e2e8f0;
+}
+
+.system-message {
+    align-self: center;
+    max-width: 95%;
+    text-align: center;
+}
+
+.system-message p {
     font-family: monospace;
     font-size: 10px;
-    letter-spacing: 1px;
-    margin-top: 22px;
+    line-height: 1.6;
+    color: #94a3b8;
+    background: rgba(34, 211, 238, 0.05);
+    border: 1px solid #23364e;
+    padding: 10px 14px;
+    border-radius: 5px;
 }
 
 /* =================================
-   USER ASSESSMENT
+   TYPING INDICATOR
 ================================= */
 
-.assessment h3 {
-    margin-bottom: 8px;
+.typing-indicator {
+    font-family: monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: #22d3ee;
+    margin: 14px 0;
 }
 
-.instruction {
-    font-size: 13px;
-    color: #94a3b8;
-    margin-bottom: 20px;
+.typing-indicator[hidden] {
+    display: none;
 }
 
-.answer-buttons {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+/* =================================
+   CHAT INPUT
+================================= */
+
+.chat-input-area {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
 }
 
-.answer-buttons button {
-    padding: 16px;
-    border-radius: 7px;
-    font-size: 13px;
+.chat-input-area input {
+    flex: 1;
+    min-width: 0;
+    padding: 15px;
+    background: #0b1424;
+    border: 1px solid #31445e;
+    border-radius: 6px;
+    color: #f1f5f9;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: 0.2s ease;
+}
+
+.chat-input-area input:focus {
+    border-color: #22d3ee;
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.1);
+}
+
+.chat-input-area input::placeholder {
+    color: #64748b;
+}
+
+.chat-input-area button {
+    padding: 0 22px;
+    background: rgba(34, 211, 238, 0.1);
+    border: 1px solid #0891b2;
+    border-radius: 6px;
+    color: #67e8f9;
+    font-family: monospace;
+    font-size: 12px;
     font-weight: bold;
     letter-spacing: 1px;
     cursor: pointer;
     transition: 0.2s ease;
 }
 
-.answer-buttons button span {
-    font-family: monospace;
-    margin-right: 8px;
-    opacity: 0.7;
+.chat-input-area button:hover {
+    background: rgba(34, 211, 238, 0.2);
+    box-shadow: 0 0 15px rgba(34, 211, 238, 0.12);
 }
 
-.scam-button {
-    color: #f87171;
-    background: rgba(239, 68, 68, 0.08);
-    border: 1px solid #7f3038;
+.chat-input-area button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
-.scam-button:hover {
-    background: rgba(239, 68, 68, 0.18);
-    border-color: #f87171;
-    box-shadow: 0 0 15px rgba(239, 68, 68, 0.12);
-}
-
-.legit-button {
-    color: #4ade80;
-    background: rgba(34, 197, 94, 0.08);
-    border: 1px solid #276749;
-}
-
-.legit-button:hover {
-    background: rgba(34, 197, 94, 0.18);
-    border-color: #4ade80;
-    box-shadow: 0 0 15px rgba(34, 197, 94, 0.12);
-}
-
-#feedback {
-    margin-top: 18px;
-    font-size: 14px;
-    line-height: 1.6;
-    color: #67e8f9;
-}
-
-#next-button {
+.chat-footer {
     margin-top: 15px;
-    padding: 12px 18px;
-    border-radius: 6px;
-    background: #164e63;
-    color: #a5f3fc;
-    border: 1px solid #0891b2;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-#next-button:hover {
-    background: #155e75;
+    font-family: monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    line-height: 1.6;
+    color: #52647c;
 }
 
 /* =================================
-   AI PANELS
+   INFORMATION PANELS
 ================================= */
 
 .ai-placeholder {
@@ -310,6 +370,38 @@ main {
     color: #64748b;
     font-size: 12px;
     line-height: 1.5;
+}
+
+/* =================================
+   SESSION INFORMATION
+================================= */
+
+.session-info {
+    background: #0b1424;
+    border: 1px solid #31445e;
+    border-radius: 8px;
+    padding: 18px;
+    margin-top: 18px;
+}
+
+.session-info p {
+    font-family: monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: #64748b;
+    margin-bottom: 6px;
+}
+
+.session-info span {
+    display: block;
+    color: #67e8f9;
+    font-family: monospace;
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+
+.session-info span:last-child {
+    margin-bottom: 0;
 }
 
 /* =================================
@@ -360,11 +452,532 @@ footer {
         padding: 18px;
     }
 
-    .answer-buttons {
-        grid-template-columns: 1fr;
+    .chat-messages {
+        min-height: 300px;
+        padding: 14px;
+    }
+
+    .chat-message {
+        max-width: 95%;
+    }
+
+    .chat-input-area {
+        flex-direction: column;
+    }
+
+    .chat-input-area button {
+        padding: 14px;
     }
 
     footer {
         flex-direction: column;
     }
+}
+
+/* =================================
+   ENHANCED CHAT DESIGN
+================================= */
+
+.chat-panel {
+    overflow: hidden;
+}
+
+.chat-info {
+    background: rgba(8, 15, 28, 0.8);
+    border-color: #263a54;
+}
+
+.chat-messages {
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(34, 211, 238, 0.04), transparent 70%),
+        #080f1c;
+    min-height: 400px;
+    padding: 24px;
+    scrollbar-width: thin;
+    scrollbar-color: #31445e #080f1c;
+}
+
+.chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: #31445e;
+    border-radius: 10px;
+}
+
+.chat-message {
+    position: relative;
+    animation: messageAppear 0.25s ease;
+}
+
+.chat-bubble {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    transition: border-color 0.2s ease;
+}
+
+.agent-message .chat-bubble {
+    border-radius: 3px 12px 12px 12px;
+}
+
+.user-message .chat-bubble {
+    border-radius: 12px 3px 12px 12px;
+}
+
+.agent-message .chat-bubble:hover {
+    border-color: #22d3ee;
+}
+
+.user-message .chat-bubble:hover {
+    border-color: #4ade80;
+}
+
+.chat-input-area {
+    background: #0b1424;
+    border: 1px solid #263a54;
+    border-radius: 8px;
+    padding: 6px;
+}
+
+.chat-input-area input {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.chat-input-area input:focus {
+    border: none;
+    box-shadow: none;
+}
+
+.chat-input-area button {
+    border-radius: 5px;
+}
+
+/* =================================
+   SCENARIO DETAILS
+================================= */
+
+.scenario-details {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #0b1424;
+    border: 1px solid #31445e;
+    padding: 15px;
+    border-radius: 7px;
+    margin-top: 18px;
+}
+
+.scenario-indicator {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #fbbf24;
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+}
+
+.scenario-details p {
+    color: #e2e8f0;
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+.scenario-details span:last-child {
+    font-family: monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: #64748b;
+}
+
+/* =================================
+   TRUST & RISK METERS
+================================= */
+
+.meter-section {
+    margin-top: 24px;
+}
+
+.meter-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #94a3b8;
+    margin-bottom: 9px;
+}
+
+.meter-heading span:last-child {
+    color: #e2e8f0;
+}
+
+.meter-track {
+    height: 9px;
+    width: 100%;
+    background: #080f1c;
+    border: 1px solid #263a54;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 23px;
+}
+
+.meter-fill {
+    height: 100%;
+    width: 50%;
+    border-radius: 20px;
+    transition: width 0.5s ease;
+}
+
+.trust-fill {
+    background: linear-gradient(90deg, #15803d, #4ade80);
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.25);
+}
+
+.risk-fill {
+    background: linear-gradient(90deg, #b45309, #ef4444);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.25);
+}
+
+.meter-note {
+    font-family: monospace;
+    font-size: 9px;
+    line-height: 1.6;
+    letter-spacing: 1px;
+    color: #64748b;
+    border-top: 1px solid #23364e;
+    padding-top: 14px;
+}
+
+/* =================================
+   MESSAGE ANIMATION
+================================= */
+
+@keyframes messageAppear {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+/* ============================= */
+/* AI ANALYSIS SIDEBAR           */
+/* ============================= */
+
+.panel-description {
+    color: #91a4b7;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    margin: 12px 0 20px;
+}
+
+/* Trust and risk meters */
+
+.meter-section {
+    margin-bottom: 20px;
+}
+
+.meter-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 9px;
+    color: #c4d4e2;
+    font-size: 0.78rem;
+    letter-spacing: 1px;
+}
+
+.meter-heading span:last-child {
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.meter-track {
+    width: 100%;
+    height: 8px;
+    background: #172535;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.meter-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.4s ease;
+}
+
+.trust-fill {
+    background: #35c9d0;
+}
+
+.risk-fill {
+    background: #e65b65;
+}
+
+.meter-note {
+    color: #71869a;
+    font-size: 0.68rem;
+    line-height: 1.5;
+    margin-top: 15px;
+}
+
+/* Coach / Analyst debrief */
+
+.debrief-placeholder {
+    text-align: center;
+    padding: 24px 12px;
+    margin-top: 12px;
+    border: 1px dashed #30465b;
+    border-radius: 6px;
+    background: rgba(10, 25, 40, 0.45);
+}
+
+.debrief-icon {
+    display: block;
+    color: #35c9d0;
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.debrief-placeholder h4 {
+    color: #dceaf5;
+    font-size: 0.9rem;
+    margin-bottom: 9px;
+}
+
+.debrief-placeholder p {
+    color: #91a4b7;
+    font-size: 0.78rem;
+    line-height: 1.6;
+}
+
+.debrief-report {
+    margin-top: 18px;
+}
+
+.report-section {
+    padding: 12px 0;
+    border-bottom: 1px solid #26394c;
+}
+
+.report-section:last-child {
+    border-bottom: none;
+}
+
+.report-section h4 {
+    color: #35c9d0;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    margin-bottom: 7px;
+}
+
+.report-section p {
+    color: #b5c5d3;
+    font-size: 0.8rem;
+    line-height: 1.6;
+}
+
+/* Keep sidebar panels visually consistent */
+
+.side-panels {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.session-panel .session-info {
+    margin-top: 18px;
+}
+/* ============================= */
+/* SIMULATED BANK PANEL          */
+/* ============================= */
+
+.bank-panel[hidden] {
+    display: none;
+}
+
+.bank-balance {
+    background: rgba(10, 25, 40, 0.7);
+    border: 1px solid #30465b;
+    border-radius: 6px;
+    padding: 18px;
+    margin: 18px 0;
+}
+
+.bank-balance p {
+    color: #91a4b7;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+}
+
+.bank-balance h2 {
+    color: #35c9d0;
+    font-size: 1.8rem;
+    margin: 10px 0;
+}
+
+.bank-balance h2 span {
+    font-size: 0.8rem;
+}
+
+.bank-balance > span {
+    color: #71869a;
+    font-size: 0.65rem;
+}
+
+.bank-transfer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.bank-transfer label {
+    color: #c4d4e2;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    margin-top: 8px;
+}
+
+.bank-field,
+.bank-transfer input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    border: 1px solid #30465b;
+    border-radius: 5px;
+    background: #101e2d;
+    color: #dceaf5;
+    font-family: inherit;
+    font-size: 0.8rem;
+}
+
+.bank-warning {
+    color: #e6ad61;
+    font-size: 0.68rem;
+    line-height: 1.5;
+    margin: 8px 0;
+}
+
+.bank-transfer button {
+    padding: 12px;
+    background: #203344;
+    color: #91a4b7;
+    border: 1px solid #40566b;
+    border-radius: 5px;
+    font-family: inherit;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.bank-transfer button:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.bank-transfer button:not(:disabled):hover {
+    background: #155e75;
+    border-color: #22d3ee;
+    color: #ffffff;
+}
+
+/* =================================
+   PAGE NAVIGATION
+================================= */
+
+.main-navigation {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 15px 6%;
+    background: rgba(10, 17, 31, 0.75);
+    border-bottom: 1px solid #23364e;
+}
+
+.nav-button {
+    padding: 12px 24px;
+    background: transparent;
+    border: 1px solid #31445e;
+    border-radius: 5px;
+    color: #94a3b8;
+    font-family: monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.nav-button:hover {
+    border-color: #22d3ee;
+    color: #67e8f9;
+}
+
+.nav-button.active {
+    background: rgba(34, 211, 238, 0.1);
+    border-color: #22d3ee;
+    color: #67e8f9;
+}
+
+/* =================================
+   PAGE VISIBILITY
+================================= */
+
+.page-view[hidden] {
+    display: none;
+}
+
+.page-view {
+    animation: messageAppear 0.25s ease;
+}
+
+/* Bank page layout */
+
+#bank-page > .bank-panel {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+/* Mobile navigation */
+
+@media (max-width: 500px) {
+    .main-navigation {
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .nav-button {
+        flex: 1;
+        padding: 12px 8px;
+        font-size: 10px;
+    }
+}
+
+/* =================================
+   LATEST DETECTION SIGNAL
+================================= */
+
+.signal-details {
+    margin-top: 22px;
+    padding: 15px;
+    background: rgba(8, 15, 28, 0.75);
+    border: 1px solid #263a54;
+    border-left: 3px solid #22d3ee;
+    border-radius: 6px;
+}
+
+.signal-details .eyebrow {
+    font-size: 10px;
+    margin-bottom: 9px;
+}
+
+.signal-details p:last-child {
+    color: #b5c5d3;
+    font-size: 0.78rem;
+    line-height: 1.6;
 }
