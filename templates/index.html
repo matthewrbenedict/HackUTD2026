@@ -35,6 +35,10 @@
         <button class="nav-button" id="accounts-tab" type="button">
             ACCOUNT STATUS
         </button>
+
+        <button class="nav-button" id="email-tab" type="button">
+            SIMULATED EMAIL
+        </button>
     </nav>
 
     <main>
@@ -98,6 +102,15 @@
                             SEND →
                         </button>
                     </form>
+
+                    <button
+                        type="button"
+                        id="new-scenario-button"
+                        class="new-scenario-button"
+                        hidden
+                    >
+                        START NEW SCENARIO →
+                    </button>
 
                     <p class="chat-footer">
                         YOUR RESPONSES ARE PART OF A FICTIONAL TRAINING EXERCISE.
@@ -305,6 +318,58 @@
 
         </section>
         <!-- END ACCOUNT STATUS PAGE -->
+
+
+        <!-- SIMULATED EMAIL PAGE -->
+        <section class="page-view" id="email-page" hidden>
+
+            <section class="welcome">
+                <p class="eyebrow">MESSAGE TERMINAL / FICTIONAL INBOX</p>
+                <h2>Simulated Email Inbox</h2>
+                <p>
+                    Review fictional messages sent to your simulated account.
+                    Scam scenarios may arrive through this inbox.
+                </p>
+            </section>
+
+            <section class="panel email-panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <p class="eyebrow">INBOX / FICTIONAL ACCOUNT</p>
+                        <h3>EMAIL INBOX</h3>
+                    </div>
+                    <span class="tag" id="email-unread-badge">0 UNREAD</span>
+                </div>
+
+                <div class="email-layout">
+                    <div class="email-list" id="email-list">
+                        <!-- populated by script.js -->
+                    </div>
+
+                    <div class="email-reader" id="email-reader">
+                        <div class="email-reader-placeholder" id="email-reader-placeholder">
+                            <span class="debrief-icon">✉</span>
+                            <h4>Select a message</h4>
+                            <p>Open an email to read its contents.</p>
+                        </div>
+
+                        <div class="email-reader-content" id="email-reader-content" hidden>
+                            <div class="email-reader-meta">
+                                <p id="email-reader-from"></p>
+                                <p id="email-reader-to"></p>
+                                <p id="email-reader-date"></p>
+                            </div>
+                            <h3 id="email-reader-subject"></h3>
+                            <div class="email-reader-body" id="email-reader-body"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+        </section>
+        <!-- END SIMULATED EMAIL PAGE -->
 
 
         <footer>

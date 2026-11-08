@@ -17,18 +17,38 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 SESSIONS = {}
 
 
+def create_session():
+    """Create and store a fresh ChatSession for the current browser."""
+    chat = ChatSession()
+    session_id = os.urandom(16).hex()
+    session["chat_session_id"] = session_id
+    SESSIONS[session_id] = chat
+    return chat
+
+
 def get_session():
     """Return (or create) the ChatSession for the current browser."""
     session_id = session.get("chat_session_id")
     chat = SESSIONS.get(session_id)
 
     if chat is None:
-        chat = ChatSession()
-        session_id = os.urandom(16).hex()
-        session["chat_session_id"] = session_id
-        SESSIONS[session_id] = chat
+        chat = create_session()
 
     return chat
+
+
+def start_payload(chat):
+    """Build the /api/start response body for the given ChatSession."""
+    opening = chat.get_opening()
+
+    response = {
+        "user_balance": chat.user_balance,
+        "user_account_id": USER_ACCOUNT_ID,
+        "agent_account_id": AGENT_ACCOUNT_ID,
+    }
+    response.update(agent_payload(chat, opening))
+
+    return response
 
 
 def agent_payload(chat, agent):
@@ -46,6 +66,9 @@ def agent_payload(chat, agent):
         payload["agent_message"] = agent["message"]
         payload["agent_received"] = agent.get("received", 0)
         payload["notice"] = agent.get("notice")
+        if agent.get("scenario_done"):
+            payload["done"] = True
+            payload.update(chat.verdict())
     elif agent["type"] in ("done", "silent"):
         payload["done"] = True
         payload.update(chat.verdict())
@@ -62,17 +85,13 @@ def home():
 @app.route("/api/start")
 def api_start():
     """Return the agent's opening message and the initial bank state."""
-    chat = get_session()
-    opening = chat.get_opening()
+    return jsonify(start_payload(get_session()))
 
-    response = {
-        "user_balance": chat.user_balance,
-        "user_account_id": USER_ACCOUNT_ID,
-        "agent_account_id": AGENT_ACCOUNT_ID,
-    }
-    response.update(agent_payload(chat, opening))
 
-    return jsonify(response)
+@app.route("/api/reset", methods=["POST"])
+def api_reset():
+    """Start a fresh scenario and return its opening state."""
+    return jsonify(start_payload(create_session()))
 
 
 @app.route("/api/chat", methods=["POST"])
@@ -126,6 +145,28 @@ def api_accounts():
     """Return the status of every account in the simulation."""
     chat = get_session()
     return jsonify({"accounts": chat.bank.list_accounts()})
+
+
+@app.route("/api/emails")
+def api_emails():
+    """Return the simulated inbox for the browser's session."""
+    chat = get_session()
+    return jsonify({"emails": chat.list_emails()})
+
+
+@app.route("/api/emails/read", methods=["POST"])
+def api_emails_read():
+    """Mark a simulated email as read."""
+    chat = get_session()
+
+    payload = request.get_json(silent=True) or {}
+    try:
+        email_id = int(payload.get("id"))
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "Invalid email id."}), 400
+
+    chat.mark_email_read(email_id)
+    return jsonify({"success": True, "emails": chat.list_emails()})
 
 
 @app.route("/api/bank/transfer", methods=["POST"])

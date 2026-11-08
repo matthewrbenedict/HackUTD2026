@@ -5,16 +5,19 @@
 const investigationTab = document.getElementById("investigation-tab");
 const bankTab = document.getElementById("bank-tab");
 const accountsTab = document.getElementById("accounts-tab");
+const emailTab = document.getElementById("email-tab");
 
 const investigationPage = document.getElementById("investigation-page");
 const bankPage = document.getElementById("bank-page");
 const accountsPage = document.getElementById("accounts-page");
+const emailPage = document.getElementById("email-page");
 
 function showPage(page) {
     const pages = {
         investigation: [investigationPage, investigationTab],
         bank: [bankPage, bankTab],
         accounts: [accountsPage, accountsTab],
+        email: [emailPage, emailTab],
     };
 
     for (const [name, [pageEl, tabEl]] of Object.entries(pages)) {
@@ -25,6 +28,10 @@ function showPage(page) {
 
     if (page === "accounts") {
         loadAccounts();
+    }
+
+    if (page === "email") {
+        loadEmails();
     }
 }
 
@@ -40,6 +47,10 @@ accountsTab.addEventListener("click", () => {
     showPage("accounts");
 });
 
+emailTab.addEventListener("click", () => {
+    showPage("email");
+});
+
 
 /* =================================
    CHAT ELEMENTS
@@ -50,6 +61,7 @@ const chatForm = document.getElementById("chat-form");
 const chatInput = document.getElementById("chat-input");
 const sendButton = document.getElementById("send-button");
 const typingIndicator = document.getElementById("typing-indicator");
+const newScenarioButton = document.getElementById("new-scenario-button");
 
 
 /* =================================
@@ -67,6 +79,21 @@ const transferButton = document.getElementById("transfer-button");
 ================================= */
 
 const accountsList = document.getElementById("accounts-list");
+
+
+/* =================================
+   EMAIL ELEMENTS
+================================= */
+
+const emailList = document.getElementById("email-list");
+const emailUnreadBadge = document.getElementById("email-unread-badge");
+const emailReaderPlaceholder = document.getElementById("email-reader-placeholder");
+const emailReaderContent = document.getElementById("email-reader-content");
+const emailReaderFrom = document.getElementById("email-reader-from");
+const emailReaderTo = document.getElementById("email-reader-to");
+const emailReaderDate = document.getElementById("email-reader-date");
+const emailReaderSubject = document.getElementById("email-reader-subject");
+const emailReaderBody = document.getElementById("email-reader-body");
 
 
 /* =================================
@@ -88,6 +115,7 @@ const signalDescription = document.getElementById("signal-description");
 
 let balance = 0;
 let conversationClosed = false;
+let currentEmails = [];
 
 
 /* =================================
@@ -205,6 +233,63 @@ function showAgentReply(data) {
 
         conversationClosed = true;
         setChatBusy(false);
+        newScenarioButton.hidden = false;
+    }
+
+    loadEmails();
+}
+
+
+async function startNewScenario() {
+    newScenarioButton.hidden = true;
+    conversationClosed = false;
+    setChatBusy(true);
+
+    // Reset the transcript to the initial training notice.
+    chatMessages.innerHTML = "";
+    const notice = document.createElement("div");
+    notice.classList.add("chat-message", "system-message");
+    const noticeText = document.createElement("p");
+    noticeText.textContent =
+        "TRAINING SIMULATION: Do not enter real passwords, " +
+        "account details, or personal information.";
+    notice.appendChild(noticeText);
+    chatMessages.appendChild(notice);
+
+    // Reset the simulated inbox reader.
+    currentEmails = [];
+    emailReaderPlaceholder.hidden = false;
+    emailReaderContent.hidden = true;
+
+    // Reset the detection meters.
+    updateTrustScore(50);
+    updateScamRisk(0);
+    updateLatestSignal("Waiting for conversation activity...");
+
+    try {
+        const data = await api("/api/reset", { method: "POST" });
+
+        balance = data.user_balance;
+        updateBankBalance();
+
+        if (transferRecipient) {
+            transferRecipient.textContent =
+                `UNKNOWN CONTACT / DEMO-${data.agent_account_id}`;
+        }
+
+        transferAmount.value = "";
+        transferButton.textContent = "SIMULATE TRANSFER →";
+        updateTransferButton();
+
+        showPage("investigation");
+        showAgentReply(data);
+    } catch (error) {
+        addMessage(
+            "Unable to start a new scenario. Check that the server is running.",
+            "system"
+        );
+    } finally {
+        setChatBusy(false);
     }
 }
 
@@ -270,6 +355,121 @@ function renderAccounts(accounts) {
         card.append(id, owner, balance);
         accountsList.appendChild(card);
     }
+}
+
+
+/* =================================
+   EMAIL FUNCTIONS
+================================= */
+
+async function loadEmails() {
+    try {
+        const data = await api("/api/emails");
+        renderEmails(data.emails || []);
+    } catch (error) {
+        emailList.innerHTML =
+            '<p class="email-empty">Could not load the simulated inbox.</p>';
+        updateEmailBadge(0);
+    }
+}
+
+
+function updateEmailBadge(unreadCount) {
+    emailUnreadBadge.textContent = `${unreadCount} UNREAD`;
+}
+
+
+function renderEmails(emails) {
+    currentEmails = emails;
+    emailList.innerHTML = "";
+
+    const unread = emails.filter((email) => email.unread).length;
+    updateEmailBadge(unread);
+
+    if (!emails.length) {
+        const empty = document.createElement("p");
+        empty.classList.add("email-empty");
+        empty.textContent =
+            "Inbox is empty. The agent has not sent any email yet.";
+        emailList.appendChild(empty);
+        return;
+    }
+
+    for (const email of emails) {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.classList.add("email-item");
+
+        if (email.unread) {
+            item.classList.add("unread");
+        }
+
+        const from = document.createElement("div");
+        from.classList.add("email-item-from");
+        from.textContent = email.from || "Unknown Sender";
+
+        const subject = document.createElement("div");
+        subject.classList.add("email-item-subject");
+        subject.textContent = email.subject || "(no subject)";
+
+        const preview = document.createElement("div");
+        preview.classList.add("email-item-preview");
+        preview.textContent = (email.body || "").replace(/\s+/g, " ").trim();
+
+        item.append(from, subject, preview);
+        item.addEventListener("click", () => openEmail(email.id));
+        emailList.appendChild(item);
+    }
+}
+
+
+async function openEmail(emailId) {
+    const cached = currentEmails.find((entry) => entry.id === emailId);
+    if (cached) {
+        showEmailReader(cached);
+    }
+
+    try {
+        const data = await api("/api/emails/read", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: emailId }),
+        });
+
+        const email = (data.emails || []).find((entry) => entry.id === emailId);
+        if (email) {
+            showEmailReader(email);
+        }
+
+        renderEmails(data.emails || []);
+    } catch (error) {
+        if (cached) {
+            renderEmails(currentEmails);
+        }
+    }
+}
+
+
+function setMetaLine(element, label, value) {
+    element.textContent = "";
+
+    const span = document.createElement("span");
+    span.textContent = label;
+
+    element.appendChild(span);
+    element.appendChild(document.createTextNode(` ${value || ""}`));
+}
+
+
+function showEmailReader(email) {
+    emailReaderPlaceholder.hidden = true;
+    emailReaderContent.hidden = false;
+
+    setMetaLine(emailReaderFrom, "FROM:", email.from || "Unknown Sender");
+    setMetaLine(emailReaderTo, "TO:", email.to || "You");
+    setMetaLine(emailReaderDate, "DATE:", email.date || "");
+    emailReaderSubject.textContent = email.subject || "(no subject)";
+    emailReaderBody.textContent = email.body || "";
 }
 
 
@@ -408,5 +608,6 @@ async function startApplication() {
 }
 
 chatForm.addEventListener("submit", sendMessage);
+newScenarioButton.addEventListener("click", startNewScenario);
 
 startApplication();
