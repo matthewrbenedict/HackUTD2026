@@ -4,32 +4,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScamShield</title>
+    <title>SIGNAL//ZERO | ScamShield</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
-    <header>
-        <h1>ScamShield</h1>
-        <p>Learn to recognize scams before they catch you.</p>
+
+    <header class="topbar">
+        <div class="brand">
+            <h1>SIGNAL<span>//</span>ZERO</h1>
+            <p>SCAMSHIELD INTELLIGENCE DIVISION</p>
+        </div>
+
+        <div class="system-status">
+            <span class="status-dot"></span>
+            SYSTEM ONLINE
+        </div>
     </header>
 
     <main>
-        <section class="panel message-panel">
-            <h2>Incoming Message</h2>
-            <p class="placeholder">Your message will appear here.</p>
+
+        <section class="welcome">
+            <p class="eyebrow">INVESTIGATOR TERMINAL / ACTIVE SESSION</p>
+            <h2>A new signal has been intercepted.</h2>
+            <p>
+                Unknown communications are entering the network.
+                Examine the evidence and determine what can be trusted.
+            </p>
         </section>
 
-        <section class="panel detection-panel">
-            <h2>Scam Detection</h2>
-            <p class="placeholder">The AI's analysis will appear here.</p>
-        </section>
+        <div class="investigation-layout">
 
-        <section class="panel coach-panel">
-            <h2>Safety Coach</h2>
-            <p class="placeholder">Tips and explanations will appear here.</p>
-        </section>
+            <!-- Main message area -->
+            <section class="panel message-panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <p class="eyebrow">INCOMING TRANSMISSION</p>
+                        <h3>Intercepted Message</h3>
+                    </div>
+                    <span class="tag">UNVERIFIED</span>
+                </div>
+
+                <div class="message-card">
+                    <div class="message-meta">
+                        <span>ORIGIN</span>
+                        <span>UNKNOWN SENDER</span>
+                    </div>
+
+                    <p class="sender">FROM: {{ message.sender }}</p>
+
+                    <p class="message-text">{{ message.text }}</p>
+
+                    <div class="message-footer">
+                        CHANNEL: DIGITAL MESSAGE
+                    </div>
+                </div>
+
+                <div class="assessment">
+                    <p class="eyebrow">YOUR ASSESSMENT</p>
+                    <h3>Can this message be trusted?</h3>
+                    <p class="instruction">
+                        Analyze the message before making your decision.
+                    </p>
+
+                    <div class="answer-buttons">
+                        <button
+                            id="scam-button"
+                            class="scam-button"
+                            onclick="checkAnswer('scam')">
+                            <span>01</span> THREAT
+                        </button>
+
+                        <button
+                            id="legit-button"
+                            class="legit-button"
+                            onclick="checkAnswer('legit')">
+                            <span>02</span> TRUSTED
+                        </button>
+                    </div>
+
+                    <p id="feedback"></p>
+
+                    <button id="next-button" onclick="nextMessage()" hidden>
+                        Next Assignment →
+                    </button>
+                </div>
+
+            </section>
+
+            <!-- AI analysis area -->
+            <aside class="side-panels">
+
+                <section class="panel detection-panel">
+                    <p class="eyebrow">AI ANALYST / 01</p>
+                    <h3>Threat Assessment</h3>
+
+                    <div class="ai-placeholder">
+                        <span class="ai-icon">◈</span>
+                        <p>Awaiting intelligence...</p>
+                        <span>AI analysis will appear here.</span>
+                    </div>
+                </section>
+
+                <section class="panel coach-panel">
+                    <p class="eyebrow">FIELD INTELLIGENCE / 02</p>
+                    <h3>Analyst's Notes</h3>
+
+                    <div class="ai-placeholder">
+                        <span class="ai-icon">⌁</span>
+                        <p>Evidence not yet reviewed.</p>
+                        <span>Warning signs and safety guidance will appear here.</span>
+                    </div>
+                </section>
+
+            </aside>
+
+        </div>
+
+        <footer>
+            <p>SIGNAL//ZERO — SCAMSHIELD INVESTIGATION NETWORK</p>
+            <p>STAY ALERT. QUESTION THE SIGNAL.</p>
+        </footer>
+
     </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 
 </body>
 </html>
