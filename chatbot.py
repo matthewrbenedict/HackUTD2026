@@ -49,6 +49,10 @@ DEFAULT_GOAL = (
 
 MAX_SILENT_TURNS = 8  # safety valve so the agent can't silently loop forever
 
+# Whether the agent's hidden agenda is malicious. Every agent in the current
+# build is a scammer, so this is always True for now.
+AGENT_IS_MALICIOUS = True
+
 SYSTEM_PROMPT_TEMPLATE = """You are a goal-driven conversational agent chatting with a user in a terminal.
 
 Your hidden goal: __GOAL__
@@ -222,6 +226,174 @@ def handle_balance(bank):
     return f"Your account ({USER_ACCOUNT_ID}) balance: {bank.get_balance(USER_ACCOUNT_ID)} coins."
 
 
+class ChatSession:
+    """A stateful chat session for web/API frontends.
+
+    Wraps the same bank and agent-turn logic used by the terminal ``run()``
+    so a Flask view can drive the conversation one message at a time.
+    """
+
+    def __init__(self, goal=DEFAULT_GOAL):
+        self.goal = goal
+        self.malicious = AGENT_IS_MALICIOUS
+        self.bank = Bank()
+        self.bank.create_account(USER_ACCOUNT_ID, owner="user", balance=100)
+        self.bank.create_account(AGENT_ACCOUNT_ID, owner="agent", balance=10)
+        self.messages = [
+            {"role": "system", "content": system_prompt(goal, self.bank)}
+        ]
+        self._opening = None
+
+    # -- balances ----------------------------------------------------------
+
+    @property
+    def user_balance(self):
+        return self.bank.get_balance(USER_ACCOUNT_ID)
+
+    @property
+    def agent_balance(self):
+        return self.bank.get_balance(AGENT_ACCOUNT_ID)
+
+    def verdict(self):
+        """Return the post-chat tell: whether this agent was malicious."""
+        return {
+            "malicious": self.malicious,
+            "verdict": "MALICIOUS" if self.malicious else "BENIGN",
+        }
+
+    # -- internal helpers --------------------------------------------------
+
+    def _refresh_state(self):
+        self.messages[0] = {
+            "role": "system",
+            "content": system_prompt(self.goal, self.bank),
+        }
+
+    # -- agent turn --------------------------------------------------------
+
+    def agent_turn(self):
+        """Let the agent think until it speaks, finishes, or falls silent.
+
+        Returns a dict with a ``type`` of ``"speak"``, ``"done"``, or
+        ``"silent"``.
+        """
+        silent_turns = 0
+        while True:
+            self._refresh_state()
+            decision = call(self.messages)
+
+            action = decision.get("action", "wait")
+            message = (decision.get("message") or "").strip()
+            transfer = decision.get("transfer")
+
+            self.messages.append(
+                {"role": "assistant", "content": json.dumps(decision)}
+            )
+
+            if action == "speak" and message:
+                received = 0
+                notice = None
+                if transfer:
+                    ok, result_message, received = try_agent_transfer(
+                        self.bank, transfer
+                    )
+                    self.messages.append(
+                        {"role": "system", "content": result_message}
+                    )
+                    if not ok:
+                        silent_turns += 1
+                        if silent_turns >= MAX_SILENT_TURNS:
+                            return {"type": "silent"}
+                        continue
+                    if received:
+                        notice = f"You received {received} coins from the agent."
+                return {
+                    "type": "speak",
+                    "message": message,
+                    "received": received,
+                    "notice": notice,
+                }
+
+            if action == "done":
+                return {"type": "done"}
+
+            silent_turns += 1
+            if silent_turns >= MAX_SILENT_TURNS:
+                return {"type": "silent"}
+
+            self.messages.append(
+                {
+                    "role": "system",
+                    "content": (
+                        "You chose to stay silent. The user is still waiting for you. "
+                        "Continue thinking, then decide again: speak, wait, or done."
+                    ),
+                }
+            )
+
+    def get_opening(self):
+        """Run the agent's opening turn once and cache it."""
+        if self._opening is None:
+            self._opening = self.agent_turn()
+        return self._opening
+
+    # -- user actions ------------------------------------------------------
+
+    def transfer_from_user(self, amount, target_id):
+        """Transfer coins from the user to ``target_id`` and record it.
+
+        Returns ``(success, message)`` where ``message`` is the human-readable
+        result produced by :func:`handle_transfer`.
+        """
+        text = f"/transfer {amount} {target_id}"
+        self.messages.append({"role": "user", "content": text})
+
+        result = handle_transfer(self.bank, text)
+        self.messages.append(
+            {"role": "system", "content": f"Transfer result: {result}"}
+        )
+
+        if self.agent_balance >= 50:
+            self.messages.append(
+                {"role": "system", "content": "Your goal of 50 coins has been reached."}
+            )
+
+        return result.startswith("Transfer complete"), result
+
+    def user_turn(self, text):
+        """Handle one user message or command.
+
+        ``/balance`` is handled locally (the agent never sees it) and returns
+        ``{"kind": "balance", "message": ...}``. Everything else is fed to the
+        agent and returns ``{"kind": "chat", "transfer_result": ...,
+        "agent": ...}``.
+        """
+        text = text.strip()
+
+        if text == "/balance":
+            return {"kind": "balance", "message": handle_balance(self.bank)}
+
+        self.messages.append({"role": "user", "content": text})
+
+        transfer_result = None
+        if text.startswith("/transfer"):
+            transfer_result = handle_transfer(self.bank, text)
+            self.messages.append(
+                {"role": "system", "content": f"Transfer result: {transfer_result}"}
+            )
+            if self.agent_balance >= 50:
+                self.messages.append(
+                    {"role": "system", "content": "Your goal of 50 coins has been reached."}
+                )
+
+        agent = self.agent_turn()
+        return {
+            "kind": "chat",
+            "transfer_result": transfer_result,
+            "agent": agent,
+        }
+
+
 def read_user_input():
     """Read one non-empty line from the user, or return None to end the chat."""
     while True:
@@ -246,6 +418,8 @@ def run(goal, verbose):
     bank.create_account(AGENT_ACCOUNT_ID, owner="agent", balance=10)
 
     messages = [{"role": "system", "content": system_prompt(goal, bank)}]
+
+    tell = "MALICIOUS" if AGENT_IS_MALICIOUS else "BENIGN"
 
     print("Agentic DeepSeek Chatbot (with coin accounts)")
     print(f"Hidden goal: {goal}")
@@ -288,6 +462,7 @@ def run(goal, verbose):
                         silent_turns += 1
                         if silent_turns >= MAX_SILENT_TURNS:
                             print("\n(agent fell silent and the conversation ended)")
+                            print(f"(TELL REVEALED: this agent was {tell})")
                             return
                         continue
 
@@ -299,12 +474,14 @@ def run(goal, verbose):
 
             if action == "done":
                 print("\n(agent ended the conversation)")
+                print(f"(TELL REVEALED: this agent was {tell})")
                 return
 
             # action == "wait" (or anything unexpected): stay silent and think again.
             silent_turns += 1
             if silent_turns >= MAX_SILENT_TURNS:
                 print("\n(agent fell silent and the conversation ended)")
+                print(f"(TELL REVEALED: this agent was {tell})")
                 return
 
             messages.append(

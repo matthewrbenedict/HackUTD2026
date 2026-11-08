@@ -31,6 +31,10 @@
         <button class="nav-button" id="bank-tab" type="button">
             SIMULATED BANK
         </button>
+
+        <button class="nav-button" id="accounts-tab" type="button">
+            ACCOUNT STATUS
+        </button>
     </nav>
 
     <main>
@@ -66,14 +70,6 @@
                     </div>
 
                     <div class="chat-messages" id="chat-messages">
-
-                        <div class="chat-message agent-message">
-                            <span class="message-label">UNKNOWN SENDER</span>
-                            <div class="chat-bubble">
-                                Hello. I'm contacting you about an issue with
-                                your account. Can you help me verify something?
-                            </div>
-                        </div>
 
                         <div class="chat-message system-message">
                             <p>
@@ -277,6 +273,38 @@
 
         </section>
         <!-- END SIMULATED BANK PAGE -->
+
+
+        <!-- ACCOUNT STATUS PAGE -->
+        <section class="page-view" id="accounts-page" hidden>
+
+            <section class="welcome">
+                <p class="eyebrow">LEDGER / FULL ACCESS</p>
+                <h2>Account Status</h2>
+                <p>
+                    Live balances for every account in this simulation,
+                    including the agent's.
+                </p>
+            </section>
+
+            <section class="panel accounts-panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <p class="eyebrow">ACCOUNT OVERVIEW / 03</p>
+                        <h3>ALL ACCOUNTS</h3>
+                    </div>
+                    <span class="tag">READ ONLY</span>
+                </div>
+
+                <div class="accounts-list" id="accounts-list">
+                    <!-- populated by script.js -->
+                </div>
+
+            </section>
+
+        </section>
+        <!-- END ACCOUNT STATUS PAGE -->
 
 
         <footer>

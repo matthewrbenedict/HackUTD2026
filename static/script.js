@@ -1,22 +1,31 @@
-
 /* =================================
    PAGE NAVIGATION
 ================================= */
 
 const investigationTab = document.getElementById("investigation-tab");
 const bankTab = document.getElementById("bank-tab");
+const accountsTab = document.getElementById("accounts-tab");
 
 const investigationPage = document.getElementById("investigation-page");
 const bankPage = document.getElementById("bank-page");
+const accountsPage = document.getElementById("accounts-page");
 
 function showPage(page) {
-    const isInvestigation = page === "investigation";
+    const pages = {
+        investigation: [investigationPage, investigationTab],
+        bank: [bankPage, bankTab],
+        accounts: [accountsPage, accountsTab],
+    };
 
-    investigationPage.hidden = !isInvestigation;
-    bankPage.hidden = isInvestigation;
+    for (const [name, [pageEl, tabEl]] of Object.entries(pages)) {
+        const active = name === page;
+        pageEl.hidden = !active;
+        tabEl.classList.toggle("active", active);
+    }
 
-    investigationTab.classList.toggle("active", isInvestigation);
-    bankTab.classList.toggle("active", !isInvestigation);
+    if (page === "accounts") {
+        loadAccounts();
+    }
 }
 
 investigationTab.addEventListener("click", () => {
@@ -25,6 +34,10 @@ investigationTab.addEventListener("click", () => {
 
 bankTab.addEventListener("click", () => {
     showPage("bank");
+});
+
+accountsTab.addEventListener("click", () => {
+    showPage("accounts");
 });
 
 
@@ -44,8 +57,16 @@ const typingIndicator = document.getElementById("typing-indicator");
 ================================= */
 
 const bankBalance = document.getElementById("bank-balance");
+const transferRecipient = document.getElementById("transfer-recipient");
 const transferAmount = document.getElementById("transfer-amount");
 const transferButton = document.getElementById("transfer-button");
+
+
+/* =================================
+   ACCOUNT STATUS ELEMENTS
+================================= */
+
+const accountsList = document.getElementById("accounts-list");
 
 
 /* =================================
@@ -62,23 +83,26 @@ const signalDescription = document.getElementById("signal-description");
 
 
 /* =================================
-   TEMPORARY DEMO DATA
+   APPLICATION STATE
 ================================= */
 
-// Sample responses until the AI backend is connected.
-const sampleResponses = [
-    "I understand. I'm just trying to help you resolve this issue.",
+let balance = 0;
+let conversationClosed = false;
 
-    "Could you explain why you are hesitant? This should only take a moment.",
 
-    "I see. Is there another way we can verify your account?",
+/* =================================
+   API HELPERS
+================================= */
 
-    "For this training scenario, the fictional account requests a transfer of 25 demo coins. You can review the request in the Simulated Bank."
-];
+async function api(url, options = {}) {
+    const response = await fetch(url, options);
 
-let responseIndex = 0;
-let balance = 100;
-let transferCompleted = false;
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+    }
+
+    return response.json();
+}
 
 
 /* =================================
@@ -119,6 +143,8 @@ function addMessage(text, sender) {
         label.textContent = "YOU / INVESTIGATOR";
     } else if (sender === "system") {
         label.textContent = "SYSTEM";
+    } else if (sender === "reveal") {
+        label.textContent = "TELL REVEALED";
     } else {
         label.textContent = "UNKNOWN SENDER";
     }
@@ -135,16 +161,51 @@ function addMessage(text, sender) {
 }
 
 
-function getAgentResponse() {
-    const response = sampleResponses[responseIndex];
+function setChatBusy(busy) {
+    chatInput.disabled = busy || conversationClosed;
+    sendButton.disabled = busy || conversationClosed;
+    typingIndicator.hidden = !busy;
 
-    responseIndex++;
+    if (!busy && !conversationClosed) {
+        chatInput.focus();
+    }
+}
 
-    if (responseIndex >= sampleResponses.length) {
-        responseIndex = 0;
+
+function showAgentReply(data) {
+    if (data.agent_message) {
+        addMessage(data.agent_message, "agent");
     }
 
-    return response;
+    if (data.notice) {
+        addMessage(data.notice, "system");
+    }
+
+    if (data.done) {
+        if (!data.agent_message) {
+            addMessage("The agent ended the conversation.", "system");
+        }
+
+        if (data.verdict) {
+            addMessage(
+                `TELL REVEALED: this contact was ${data.verdict}.`,
+                "reveal"
+            );
+
+            if (data.verdict === "MALICIOUS") {
+                updateScamRisk(100);
+                updateLatestSignal(
+                    "Contact confirmed MALICIOUS. The scam has been exposed."
+                );
+            } else {
+                updateScamRisk(0);
+                updateLatestSignal("Contact confirmed benign.");
+            }
+        }
+
+        conversationClosed = true;
+        setChatBusy(false);
+    }
 }
 
 
@@ -157,8 +218,58 @@ function updateBankBalance() {
 }
 
 
-function checkForTransferRequest(agentMessage) {
-    return agentMessage.toLowerCase().includes("demo coins");
+function updateTransferButton() {
+    const amount = Number(transferAmount.value);
+
+    transferButton.disabled =
+        conversationClosed ||
+        !Number.isInteger(amount) ||
+        amount <= 0 ||
+        amount > balance;
+}
+
+
+/* =================================
+   ACCOUNT STATUS FUNCTIONS
+================================= */
+
+async function loadAccounts() {
+    try {
+        const data = await api("/api/accounts");
+        renderAccounts(data.accounts || []);
+    } catch (error) {
+        accountsList.innerHTML =
+            '<p class="accounts-error">Could not load account statuses.</p>';
+    }
+}
+
+
+function renderAccounts(accounts) {
+    accountsList.innerHTML = "";
+
+    for (const account of accounts) {
+        const card = document.createElement("div");
+        card.classList.add("account-card");
+
+        if (account.owner === "agent") {
+            card.classList.add("account-card-agent");
+        }
+
+        const id = document.createElement("span");
+        id.classList.add("account-id");
+        id.textContent = account.account_id;
+
+        const owner = document.createElement("span");
+        owner.classList.add("account-owner");
+        owner.textContent = account.owner.toUpperCase();
+
+        const balance = document.createElement("span");
+        balance.classList.add("account-balance");
+        balance.innerHTML = `${account.balance} <span>COINS</span>`;
+
+        card.append(id, owner, balance);
+        accountsList.appendChild(card);
+    }
 }
 
 
@@ -166,7 +277,7 @@ function checkForTransferRequest(agentMessage) {
    SEND CHAT MESSAGE
 ================================= */
 
-function sendMessage(event) {
+async function sendMessage(event) {
     event.preventDefault();
 
     const userText = chatInput.value.trim();
@@ -175,40 +286,37 @@ function sendMessage(event) {
         return;
     }
 
-    // Display the user's message.
     addMessage(userText, "user");
-
-    // Clear the textbox immediately.
     chatInput.value = "";
+    setChatBusy(true);
 
-    // Temporarily disable input while the agent responds.
-    chatInput.disabled = true;
-    sendButton.disabled = true;
-    typingIndicator.hidden = false;
+    try {
+        const data = await api("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: userText }),
+        });
 
-    // Temporary sample response.
-    setTimeout(() => {
-        typingIndicator.hidden = true;
+        if (data.kind === "balance") {
+            addMessage(data.message, "system");
+        } else {
+            if (data.transfer_result) {
+                addMessage(data.transfer_result, "system");
+            }
 
-        const response = getAgentResponse();
-
-        // Display the agent's response.
-        addMessage(response, "agent");
-
-        // Check the agent's message for a transfer request.
-        if (checkForTransferRequest(response)) {
-            addMessage(
-                "A simulated transfer request is now available in the banking terminal.",
-                "system"
-            );
+            showAgentReply(data);
         }
 
-        // Re-enable the textbox.
-        chatInput.disabled = false;
-        sendButton.disabled = false;
-        chatInput.focus();
-
-    }, 1000);
+        balance = data.user_balance ?? balance;
+        updateBankBalance();
+    } catch (error) {
+        addMessage(
+            "Error: could not reach the agent. Check that the server is running.",
+            "system"
+        );
+    } finally {
+        setChatBusy(false);
+    }
 }
 
 
@@ -217,60 +325,88 @@ function sendMessage(event) {
 ================================= */
 
 transferAmount.addEventListener("input", () => {
-    const amount = Number(transferAmount.value);
+    if (transferButton.textContent === "TRANSFER FAILED") {
+        transferButton.textContent = "SIMULATE TRANSFER →";
+    }
 
-    transferButton.disabled =
-        !Number.isInteger(amount) ||
-        amount <= 0 ||
-        amount > balance ||
-        transferCompleted;
+    updateTransferButton();
 });
 
 
-transferButton.addEventListener("click", () => {
+async function performTransfer() {
     const amount = Number(transferAmount.value);
 
     if (
+        conversationClosed ||
         !Number.isInteger(amount) ||
         amount <= 0 ||
-        amount > balance ||
-        transferCompleted
+        amount > balance
     ) {
         return;
     }
 
-    // Update fictional balance.
-    balance -= amount;
-    transferCompleted = true;
-
-    updateBankBalance();
-
-    transferButton.textContent = "SIMULATED TRANSFER COMPLETE";
     transferButton.disabled = true;
+    transferButton.textContent = "PROCESSING...";
 
-    addMessage(
-        `TRANSFER CONFIRMED: ${amount} demo coins sent to account DEMO-2002. This transaction is part of the simulation.`,
-        "system"
-    );
+    try {
+        const data = await api("/api/bank/transfer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ amount }),
+        });
 
-    // Switch back to investigation.
-    showPage("investigation");
-});
+        addMessage(data.message, "system");
+        showAgentReply(data);
+
+        balance = data.user_balance ?? balance;
+        updateBankBalance();
+        transferAmount.value = "";
+
+        transferButton.textContent = data.success
+            ? "SIMULATE TRANSFER →"
+            : "TRANSFER FAILED";
+
+        showPage("investigation");
+    } catch (error) {
+        addMessage("Error: could not complete the transfer.", "system");
+    } finally {
+        updateTransferButton();
+    }
+}
+
+transferButton.addEventListener("click", performTransfer);
 
 
 /* =================================
    START APPLICATION
 ================================= */
 
+async function startApplication() {
+    updateTrustScore(50);
+    updateScamRisk(0);
+    updateLatestSignal("Waiting for Detection Agent analysis...");
+    showPage("investigation");
+
+    try {
+        const data = await api("/api/start");
+
+        balance = data.user_balance;
+        updateBankBalance();
+
+        if (transferRecipient) {
+            transferRecipient.textContent =
+                `UNKNOWN CONTACT / DEMO-${data.agent_account_id}`;
+        }
+
+        showAgentReply(data);
+    } catch (error) {
+        addMessage(
+            "Unable to reach the agent. Check that the server is running and DEEPSEEK_API_KEY is set.",
+            "system"
+        );
+    }
+}
+
 chatForm.addEventListener("submit", sendMessage);
 
-updateBankBalance();
-
-updateTrustScore(50);
-updateScamRisk(0);
-
-updateLatestSignal(
-    "Waiting for Detection Agent analysis..."
-);
-
-showPage("investigation");
+startApplication();

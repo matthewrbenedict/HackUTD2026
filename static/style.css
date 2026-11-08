@@ -981,3 +981,93 @@ footer {
     font-size: 0.78rem;
     line-height: 1.6;
 }
+
+/* =================================
+   ACCOUNT STATUS PAGE
+================================= */
+
+.accounts-panel {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.accounts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.account-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 18px;
+    background: #0b1424;
+    border: 1px solid #263a54;
+    border-left: 3px solid #22d3ee;
+    border-radius: 6px;
+    font-family: monospace;
+}
+
+.account-card-agent {
+    border-left-color: #fbbf24;
+}
+
+.account-id {
+    color: #67e8f9;
+    font-size: 15px;
+    letter-spacing: 1px;
+    min-width: 70px;
+}
+
+.account-card-agent .account-id {
+    color: #fbbf24;
+}
+
+.account-owner {
+    color: #94a3b8;
+    font-size: 11px;
+    letter-spacing: 1px;
+    flex: 1;
+}
+
+.account-balance {
+    color: #e2e8f0;
+    font-size: 18px;
+}
+
+.account-balance span {
+    font-size: 10px;
+    color: #64748b;
+}
+
+.accounts-error {
+    color: #fca5a5;
+    font-family: monospace;
+    font-size: 12px;
+    padding: 12px;
+}
+
+/* =================================
+   TELL REVEAL
+================================= */
+
+.reveal-message {
+    align-self: center;
+    max-width: 95%;
+    text-align: center;
+}
+
+.reveal-message .message-label {
+    color: #fbbf24;
+}
+
+.reveal-message .chat-bubble {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid #7f1d1d;
+    border-left: 3px solid #ef4444;
+    border-right: 3px solid #ef4444;
+    color: #fecaca;
+    font-family: monospace;
+    letter-spacing: 1px;
+}

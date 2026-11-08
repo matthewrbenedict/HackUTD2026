@@ -45,6 +45,17 @@ class Bank:
             raise AccountNotFound(f"account {account_id} does not exist")
         return account.balance
 
+    def list_accounts(self):
+        """Return a summary of every account in the bank."""
+        return [
+            {
+                "account_id": account.account_id,
+                "owner": account.owner,
+                "balance": account.balance,
+            }
+            for account in self.accounts.values()
+        ]
+
     def transfer(self, from_id, to_id, amount, owner):
         """Transfer coins from from_id to to_id.
 
