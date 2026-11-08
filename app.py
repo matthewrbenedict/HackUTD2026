@@ -94,6 +94,30 @@ def api_reset():
     return jsonify(start_payload(create_session()))
 
 
+@app.route("/api/verdict", methods=["POST"])
+def api_verdict():
+    """End the chat with the user's scam/legit verdict."""
+    chat = get_session()
+
+    payload = request.get_json(silent=True) or {}
+    user_verdict = (payload.get("verdict") or "").strip().lower()
+
+    if user_verdict not in ("scam", "legit"):
+        return jsonify({"error": "Verdict must be 'scam' or 'legit'."}), 400
+
+    chat.done = True
+    actual = chat.verdict()
+    actual_type = "scam" if actual["malicious"] else "legit"
+
+    return jsonify(
+        {
+            "user_verdict": user_verdict,
+            "correct": user_verdict == actual_type,
+            **actual,
+        }
+    )
+
+
 @app.route("/api/chat", methods=["POST"])
 def api_chat():
     """Handle one message from the user and return the agent's reply."""

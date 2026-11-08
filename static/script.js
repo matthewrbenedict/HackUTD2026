@@ -97,16 +97,18 @@ const emailReaderBody = document.getElementById("email-reader-body");
 
 
 /* =================================
-   DETECTION AGENT ELEMENTS
+   SCENARIO ASSESSMENT ELEMENTS
 ================================= */
 
-const trustValue = document.getElementById("trust-value");
-const trustFill = document.getElementById("trust-fill");
+const scenarioDecision = document.getElementById("scenario-decision");
+const scamButton = document.getElementById("scam-button");
+const legitButton = document.getElementById("legit-button");
 
-const riskValue = document.getElementById("risk-value");
-const riskFill = document.getElementById("risk-fill");
-
-const signalDescription = document.getElementById("signal-description");
+const resultsPanel = document.getElementById("results-panel");
+const resultStatus = document.getElementById("result-status");
+const resultHeading = document.getElementById("result-heading");
+const resultDescription = document.getElementById("result-description");
+const resultExplanation = document.getElementById("result-explanation");
 
 
 /* =================================
@@ -134,25 +136,91 @@ async function api(url, options = {}) {
 
 
 /* =================================
-   DETECTION AGENT FUNCTIONS
+   SCENARIO ASSESSMENT FUNCTIONS
 ================================= */
 
-// These functions will receive results from the AI Detection Agent later.
-
-function updateTrustScore(score) {
-    trustValue.textContent = `${score}/100`;
-    trustFill.style.width = `${score}%`;
+function setDecisionEnabled(enabled) {
+    scamButton.disabled = !enabled;
+    legitButton.disabled = !enabled;
 }
 
 
-function updateScamRisk(risk) {
-    riskValue.textContent = `${risk}%`;
-    riskFill.style.width = `${risk}%`;
+function finishConversation() {
+    conversationClosed = true;
+    scenarioDecision.hidden = true;
+    setDecisionEnabled(false);
+    setChatBusy(false);
+    newScenarioButton.hidden = false;
 }
 
 
-function updateLatestSignal(message) {
-    signalDescription.textContent = message;
+function showVerdictResults(userChoice, data) {
+    const actualType = data.malicious ? "scam" : "legit";
+    const isCorrect = userChoice === actualType;
+
+    if (isCorrect) {
+        resultStatus.textContent = "CORRECT";
+        resultHeading.textContent = "Correct Assessment!";
+        resultDescription.textContent =
+            `You correctly identified this contact as ${data.verdict}.`;
+    } else {
+        resultStatus.textContent = "INCORRECT";
+        resultHeading.textContent = "Not Quite!";
+        resultDescription.textContent =
+            `You selected ${userChoice.toUpperCase()}, but this contact was actually ${data.verdict}.`;
+    }
+
+    resultExplanation.textContent =
+        `Scenario ${data.scenario} (${data.name}) was classified ${data.verdict}.`;
+
+    resultsPanel.hidden = false;
+    resultsPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+
+async function submitVerdict(userChoice) {
+    if (conversationClosed) {
+        return;
+    }
+
+    conversationClosed = true;
+    setDecisionEnabled(false);
+    chatInput.disabled = true;
+    sendButton.disabled = true;
+    typingIndicator.hidden = true;
+
+    addMessage(
+        `Investigator verdict submitted: ${userChoice.toUpperCase()}.`,
+        "system"
+    );
+
+    try {
+        const data = await api("/api/verdict", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ verdict: userChoice }),
+        });
+
+        scenarioDecision.hidden = true;
+        setChatBusy(false);
+        newScenarioButton.hidden = false;
+
+        addMessage(
+            `TELL REVEALED: this contact was ${data.verdict}.`,
+            "reveal"
+        );
+
+        showVerdictResults(userChoice, data);
+        loadEmails();
+    } catch (error) {
+        conversationClosed = false;
+        addMessage(
+            "Error: could not submit the assessment. Check that the server is running.",
+            "system"
+        );
+        setDecisionEnabled(true);
+        setChatBusy(false);
+    }
 }
 
 
@@ -201,6 +269,11 @@ function setChatBusy(busy) {
 
 
 function showAgentReply(data) {
+    if (conversationClosed) {
+        loadEmails();
+        return;
+    }
+
     if (data.agent_message) {
         addMessage(data.agent_message, "agent");
     }
@@ -219,21 +292,9 @@ function showAgentReply(data) {
                 `TELL REVEALED: this contact was ${data.verdict}.`,
                 "reveal"
             );
-
-            if (data.verdict === "MALICIOUS") {
-                updateScamRisk(100);
-                updateLatestSignal(
-                    "Contact confirmed MALICIOUS. The scam has been exposed."
-                );
-            } else {
-                updateScamRisk(0);
-                updateLatestSignal("Contact confirmed benign.");
-            }
         }
 
-        conversationClosed = true;
-        setChatBusy(false);
-        newScenarioButton.hidden = false;
+        finishConversation();
     }
 
     loadEmails();
@@ -261,10 +322,10 @@ async function startNewScenario() {
     emailReaderPlaceholder.hidden = false;
     emailReaderContent.hidden = true;
 
-    // Reset the detection meters.
-    updateTrustScore(50);
-    updateScamRisk(0);
-    updateLatestSignal("Waiting for conversation activity...");
+    // Reset the assessment UI.
+    scenarioDecision.hidden = false;
+    setDecisionEnabled(true);
+    resultsPanel.hidden = true;
 
     try {
         const data = await api("/api/reset", { method: "POST" });
@@ -497,6 +558,10 @@ async function sendMessage(event) {
             body: JSON.stringify({ message: userText }),
         });
 
+        if (conversationClosed) {
+            return;
+        }
+
         if (data.kind === "balance") {
             addMessage(data.message, "system");
         } else {
@@ -555,6 +620,10 @@ async function performTransfer() {
             body: JSON.stringify({ amount }),
         });
 
+        if (conversationClosed) {
+            return;
+        }
+
         addMessage(data.message, "system");
         showAgentReply(data);
 
@@ -582,9 +651,9 @@ transferButton.addEventListener("click", performTransfer);
 ================================= */
 
 async function startApplication() {
-    updateTrustScore(50);
-    updateScamRisk(0);
-    updateLatestSignal("Waiting for Detection Agent analysis...");
+    scenarioDecision.hidden = false;
+    setDecisionEnabled(true);
+    resultsPanel.hidden = true;
     showPage("investigation");
 
     try {
@@ -609,5 +678,8 @@ async function startApplication() {
 
 chatForm.addEventListener("submit", sendMessage);
 newScenarioButton.addEventListener("click", startNewScenario);
+
+scamButton.addEventListener("click", () => submitVerdict("scam"));
+legitButton.addEventListener("click", () => submitVerdict("legit"));
 
 startApplication();

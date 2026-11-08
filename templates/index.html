@@ -60,6 +60,42 @@
                 <!-- Main chat area -->
                 <section class="panel chat-panel">
 
+                    <!-- Scam / legit decision at the top -->
+                    <div class="scenario-decision" id="scenario-decision">
+                        <div class="decision-heading">
+                            <p class="eyebrow">INVESTIGATION ASSESSMENT</p>
+                            <h3>Is This a Scam?</h3>
+                            <p>
+                                Review the conversation and evidence, then decide
+                                whether this scenario is a scam or legitimate.
+                            </p>
+                        </div>
+
+                        <div class="decision-buttons">
+                            <button
+                                type="button"
+                                class="decision-button scam-button"
+                                id="scam-button"
+                            >
+                                <span>⚠</span>
+                                SCAM
+                            </button>
+
+                            <button
+                                type="button"
+                                class="decision-button legit-button"
+                                id="legit-button"
+                            >
+                                <span>✓</span>
+                                LEGIT
+                            </button>
+                        </div>
+
+                        <p class="decision-footer">
+                            SUBMIT YOUR ASSESSMENT TO END THE SIMULATION.
+                        </p>
+                    </div>
+
                     <div class="panel-heading">
                         <div>
                             <p class="eyebrow">LIVE COMMUNICATION / 01</p>
@@ -116,109 +152,32 @@
                         YOUR RESPONSES ARE PART OF A FICTIONAL TRAINING EXERCISE.
                     </p>
 
+                    <!-- Results after assessment -->
+                    <section class="panel results-panel" id="results-panel" hidden>
+                        <div class="panel-heading">
+                            <div>
+                                <p class="eyebrow">SIMULATION COMPLETE / 02</p>
+                                <h3>Investigation Results</h3>
+                            </div>
+                            <span class="tag" id="result-status">COMPLETED</span>
+                        </div>
+
+                        <div class="result-summary">
+                            <h2 id="result-heading">Assessment Results</h2>
+                            <p id="result-description">
+                                Your assessment results will appear here.
+                            </p>
+                        </div>
+
+                        <div class="result-details">
+                            <p class="eyebrow">SCENARIO EXPLANATION</p>
+                            <p id="result-explanation">
+                                The scenario explanation will appear here.
+                            </p>
+                        </div>
+                    </section>
+
                 </section>
-
-                <!-- Right-side analysis panels -->
-                <aside class="side-panels">
-                    <!-- Detection Agent -->
-                    <section class="panel detection-panel">
-
-                        <div class="panel-heading">
-                            <div>
-                                <p class="eyebrow">DETECTION AGENT / 01</p>
-                                <h3>SIGNAL ANALYSIS</h3>
-                            </div>
-                            <span class="tag">MONITORING</span>
-                        </div>
-
-                        <p class="panel-description">
-                            Monitoring user safety habits and suspicious activity.
-                        </p>
-
-                        <!-- Persistent Trust Profile -->
-                        <div class="meter-section">
-                            <div class="meter-heading">
-                                <span>USER TRUST PROFILE</span>
-                                <span id="trust-value">50/100</span>
-                            </div>
-
-                            <div class="meter-track">
-                                <div class="meter-fill trust-fill" id="trust-fill"
-                                    style="width: 50%;"></div>
-                            </div>
-
-                            <p class="meter-note">
-                                PERSISTENT PROFILE / UPDATED ACROSS SIMULATIONS
-                            </p>
-                        </div>
-
-                        <!-- Current Scam Risk -->
-                        <div class="meter-section">
-                            <div class="meter-heading">
-                                <span>CURRENT SCAM RISK</span>
-                                <span id="risk-value">0%</span>
-                            </div>
-
-                            <div class="meter-track">
-                                <div class="meter-fill risk-fill" id="risk-fill"
-                                    style="width: 0%;"></div>
-                            </div>
-
-                            <p class="meter-note">
-                                CURRENT INVESTIGATION / RESETS EACH SESSION
-                            </p>
-                        </div>
-
-                        <!-- Latest Detection -->
-                        <div class="signal-details">
-                            <p class="eyebrow">LATEST SIGNAL</p>
-                            <p id="signal-description">
-                                Waiting for conversation activity...
-                            </p>
-                        </div>
-
-                    </section>
-
-
-                    <!-- Coach / Analyst -->
-                    <section class="panel coach-panel">
-                        <div class="panel-heading">
-                            <div>
-                                <p class="eyebrow">COACH / ANALYST AI / 02</p>
-                                <h3>Investigation Debrief</h3>
-                            </div>
-                            <span class="tag" id="analysis-status">PENDING</span>
-                        </div>
-
-                        <div class="debrief-placeholder" id="debrief-placeholder">
-                            <span class="debrief-icon">◈</span>
-                            <h4>Analysis Pending</h4>
-                            <p>
-                                Complete the simulation to receive a personalized
-                                breakdown of your decisions and the warning signs
-                                you encountered.
-                            </p>
-                        </div>
-
-                        <div class="debrief-report" id="debrief-report" hidden>
-                            <div class="report-section">
-                                <h4>WARNING SIGNS</h4>
-                                <p id="warning-signs">Your analysis will appear here.</p>
-                            </div>
-
-                            <div class="report-section">
-                                <h4>YOUR DECISIONS</h4>
-                                <p id="decision-review">Your analysis will appear here.</p>
-                            </div>
-
-                            <div class="report-section">
-                                <h4>WHAT TO LEARN</h4>
-                                <p id="safety-tips">Your recommendations will appear here.</p>
-                            </div>
-                        </div>
-                    </section>
-
-                </aside>
 
             </div>
 
